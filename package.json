@@ -3,7 +3,7 @@
   "name": "symfony-translation-helper",
   "displayName": "Symfony Translation Helper",
   "description": "Visualizes translated strings in Symfony projects using Inline Decorations & Hover Support.",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "vscode": "^1.91.0"
