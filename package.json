@@ -1,0 +1,155 @@
+{
+  "publisher": "shoreless",
+  "name": "symfony-translation-helper",
+  "displayName": "Symfony Translation Helper",
+  "description": "Visualizes translated strings in Symfony projects using Inline Decorations & Hover Support.",
+  "version": "0.1.0",
+  "license": "SEE LICENSE IN LICENSE",
+  "engines": {
+    "vscode": "^1.91.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shoreless-ltd/vscode-symfony-translation-helper.git"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "keywords": [
+    "shoreless",
+    "symfony",
+    "translations",
+    "translations keys",
+    "i18n",
+    "i18n keys",
+    "internationalization",
+    "keys"
+  ],
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:php",
+    "onLanguage:twig",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescriptreact"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "symfonyTranslationHelper.openTranslationFile",
+        "title": "Open translation file"
+      }
+    ],
+    "configuration": {
+      "title": "Symfony Translation Helper",
+      "properties": {
+        "symfonyTranslationHelper.extensions": {
+          "type": "string",
+          "default": "php;twig;js;jsx;ts;tsx",
+          "markdownDescription": "Extensions of the files consuming translations, separated by semicolons.  \n*Example:* `php;twig`",
+          "order": 0
+        },
+        "symfonyTranslationHelper.translationKeyPattern": {
+          "type": "string",
+          "default": "[a-zA-Z0-9._-]+",
+          "markdownDescription": "RegEx pattern used when searching translation keys in source code strings.  \n*Example:* `[a-zA-Z0-9._-]+` *(Allows upper and lower case letters from a-z, numbers, dot, dash and underscore between one and unlimited times.)*",
+          "order": 10
+        },
+        "symfonyTranslationHelper.translationKeyMinLength": {
+          "type": "integer",
+          "default": 5,
+          "markdownDescription": "Translation key minimum length, `0` for no minimum.",
+          "order": 20
+        },
+        "symfonyTranslationHelper.translationFiles.patterns": {
+          "type": "string",
+          "default": "messages.[LANG].yml,validators.[LANG].yml",
+          "markdownDescription": "Filename pattern(s) of the translation file(s), separated by semicolons. Use `[LANG]` as language code placeholder.  \n*Example:* `messages.[LANG].yml` *(Finds language files such as \"messages.en.yml\", \"messages.de.yml\" and so on.)*",
+          "order": 30
+        },
+        "symfonyTranslationHelper.translationFiles.folders": {
+          "type": "string",
+          "default": "**/Resources/translations",
+          "markdownDescription": "Path(s) of the root folder(s) to recursively search for translation files, relative to the workspace root folder, separated by semicolons.  \n*Example:* `src/App/Resources/translations;src/AppBundle/Resources/translations`",
+          "order": 40
+        },
+        "symfonyTranslationHelper.translationFiles.ignored": {
+          "type": "string",
+          "default": "vendor;node_modules;public;web;build;.git",
+          "markdownDescription": "Folder name(s) ignored when recursively looking for translation files, separated by semicolons.  \n*Example:* `vendor;.git;public`",
+          "order": 50
+        },
+        "symfonyTranslationHelper.preview.enabled": {
+          "type": "boolean",
+          "default": "true",
+          "markdownDescription": "Whether inline translation previews are enabled.",
+          "order": 60
+        },
+        "symfonyTranslationHelper.preview.language": {
+          "type": "string",
+          "default": "en",
+          "markdownDescription": "Language to use for showing inline translation previews.  \n*Example:* `en`",
+          "order": 70
+        },
+        "symfonyTranslationHelper.preview.color": {
+          "type": "string",
+          "default": "green",
+          "markdownDescription": "Color of the translation preview text (hex value or html color name).  \n*Example:* `green`",
+          "order": 80
+        },
+        "symfonyTranslationHelper.hover.enabled": {
+          "type": "boolean",
+          "default": "true",
+          "markdownDescription": "Whether hover popups with links to translation sources are enabled.",
+          "order": 90
+        },
+        "symfonyTranslationHelper.requiredLanguages": {
+          "type": "string",
+          "default": "en",
+          "markdownDescription": "Required languages, separated by semicolons. Indicates missing translations for a found translation string.  \n*Example:* `en;de`",
+          "order": 100
+        },
+        "symfonyTranslationHelper.verbose": {
+          "type": "boolean",
+          "default": "false",
+          "markdownDescription": "Whether verbose output logs are generated in the Debug Console.",
+          "order": 1000
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "yarn run compile",
+    "check-types": "tsc --noEmit",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "yarn run compile && yarn run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test",
+    "package": "yarn run check-types && node esbuild.js --production"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.7",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.91.0",
+    "@typescript-eslint/eslint-plugin": "^7.14.1",
+    "@typescript-eslint/parser": "^7.11.0",
+    "@vscode/test-cli": "^0.0.9",
+    "@vscode/test-electron": "^2.4.0",
+    "esbuild": "^0.23.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@esm2cjs/globby": "^13.2.2",
+    "file-data-cache": "^2.1.1",
+    "find-files-recur": "^1.1.1",
+    "flatten-obj": "^3.1.1",
+    "json-source-map": "^0.6.1",
+    "yaml": "^2.4.5"
+  }
+}
