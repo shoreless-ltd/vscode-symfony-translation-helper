@@ -26,9 +26,15 @@ export default class JSONKeyMap {
         }
 
         return {
-            fileName: this.fileName,
-            line: keyMapEntry.key.line + 1,
-            col: keyMapEntry.key.column + 1,
+            key: {
+                start: { line: keyMapEntry.key.line, col: keyMapEntry.key.column },
+                end: { line: keyMapEntry.keyEnd.line, col: keyMapEntry.keyEnd.column }
+            },
+            value: {
+                start: { line: keyMapEntry.value.line, col: keyMapEntry.value.column },
+                end: { line: keyMapEntry.valueEnd.line, col: keyMapEntry.valueEnd.column }
+            },
+            fileName: this.fileName
         };
     }
 }

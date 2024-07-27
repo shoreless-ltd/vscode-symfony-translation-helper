@@ -7,9 +7,7 @@ export const hasSeparator = (key: string) => key.indexOf('_') !== -1 || key.inde
 
 export interface IMappedTranslation {
     value: string|number|boolean,
-    fileName: string,
-    line: number,
-    col: number
+    source: ILocation
 };
 
 export interface IMappedTranslations {
@@ -31,21 +29,27 @@ export interface IEditorLine {
     lineNumber: number
 };
 
-export interface IKeyMapBase {
-    children: IKeyMapChildren|null
-};
-
-export interface IKeyMapElement extends IKeyMapBase {
-    line?: number,
-    col?: number
-};
-
-export interface IKeyMapChildren {
-    [key: string]: IKeyMapElement
-};
-
-export interface ILocation {
+export interface ISourceMapPosition {
     line: number,
-    col: number,
+    col: number
+    offset?: number,
+}
+
+export interface ISourceMapRange {
+    start: ISourceMapPosition,
+    end: ISourceMapPosition
+}
+
+export interface ISourceMapElement {
+    key?: ISourceMapRange,
+    value?: ISourceMapRange,
+    children?: ISourceMapChildren|null
+};
+
+export interface ISourceMapChildren {
+    [key: string]: ISourceMapElement
+};
+
+export interface ILocation extends ISourceMapElement {
     fileName: string
 }

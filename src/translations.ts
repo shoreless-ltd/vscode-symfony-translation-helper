@@ -193,10 +193,10 @@ const loadJsonTranslations = (options: ILoadTranslationFileOptions): ITranslatio
             mapped[key] = {
                 [language]: {
                     value: value,
-                    fileName: fileName,
-                    line: 1,
-                    col: 1,
-                    ...(sourceMap.lookup(key) || {}),
+                    source: {
+                        ...(sourceMap.lookup(key) || {}),
+                        fileName: fileName
+                    }
                 }
             };
         }
@@ -226,10 +226,10 @@ const loadYamlTranslations = (options: ILoadTranslationFileOptions): ITranslatio
             mapped[key] = {
                 [language]: {
                     value: value,
-                    fileName: fileName,
-                    line: 1,
-                    col: 1,
-                    ...(sourceMap.lookup(key) || {}),
+                    source: {
+                        ...(sourceMap.lookup(key) || {}),
+                        fileName: fileName
+                    }
                 }
             };
         }

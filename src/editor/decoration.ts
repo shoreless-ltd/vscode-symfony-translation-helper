@@ -22,9 +22,8 @@ const contextTooltip = (translations: IMappedTranslations) => {
             language: languageTag.toUpperCase(),
             message: translations?.[languageTag] ? translations[languageTag]['value'].toString() : MISSING_TRANSLATION_MESSAGE,
             editCommand: translations?.[languageTag] ? Uri.parse(`command:symfonyTranslationHelper.openTranslationFile?${encodeURI(JSON.stringify({
-                fileName: translations[languageTag].fileName,
-                line: translations[languageTag].line,
-                col: translations[languageTag].col
+                fileName: translations[languageTag].source.fileName,
+                range: translations[languageTag].source?.value || translations[languageTag].source?.key
             }))}`) : null
         };
     });

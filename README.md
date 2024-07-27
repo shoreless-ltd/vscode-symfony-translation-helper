@@ -54,6 +54,8 @@ Search for `symfonyTranslationHelper` to find the following settings:
 
 * The first folder in your workspace will be searched for translation files only.  
 * At least one translation in any language must exist for any translation key in your source code, so that this extension identifies it as translation and is able to indicate missing translations in other languages.  
+* Twig `{% trans %}` tags are not supported yet.  
+* Concatenated translation keys are not supported.  
 * In some occasions, such as minimizing Visual Studio Code with an active editor tab containing translation key annotations, the annotations might be added twice. Switching the tab back and forth will remove duplicated annotations.  
 
 ## Release Notes

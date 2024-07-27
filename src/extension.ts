@@ -9,19 +9,20 @@ import {
     Range,
     Position,
     Selection,
+    Uri,
 } from 'vscode';
 import { extname, basename } from 'path';
 import { settings } from './settings';
 import log from './utilities/logger';
 import { decorateEditor } from './decorateEditor';
 import { getTranslations, clearTranslationsCache, isTranslationFile } from './translations';
+import { ISourceMapRange } from './types';
 
 console.log('🙈 STARTING Symfony Translation Helper');
 
 interface IOpenTransLationFileOptions {
     fileName: string,
-    line: number,
-    col: number
+    range: ISourceMapRange|null
 };
 
 export const activate = async (context: ExtensionContext) => {
@@ -31,24 +32,20 @@ export const activate = async (context: ExtensionContext) => {
     // Register `openTranslationFile` command.
     const command = 'symfonyTranslationHelper.openTranslationFile';
     const openTranslationFile = async ({
-        fileName = 'fileName',
-        line = 1,
-        col = 1
+        fileName,
+        range: target
     }: IOpenTransLationFileOptions) => {
-        const files = await workspace.findFiles('**/' + fileName);
-        if (!files) {
-            return;
-        }
-        files.forEach(uri => {
-            workspace
-                .openTextDocument(uri)
-                .then(doc => window.showTextDocument(doc))
-                .then(editor => {
-                    const range = new Range(new Position(line - 1, col - 1), new Position(line - 1, col - 1));
+        const uri = Uri.file(settings().workspaceRoot + (settings().workspaceRoot ? '/' : '') + fileName);
+        workspace
+            .openTextDocument(uri)
+            .then(doc => window.showTextDocument(doc))
+            .then(editor => {
+                if (target) {
+                    const range = new Range(new Position(target.start.line - 1, target.start.col - 1), new Position(target.end.line - 1, target.end.col - 1));
                     editor.selection = new Selection(range.start, range.end);
                     editor.revealRange(range);
-                });
-        });
+                }
+            });
     };
     context.subscriptions.push(commands.registerCommand(command, openTranslationFile));
 
