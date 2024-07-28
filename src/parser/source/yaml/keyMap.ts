@@ -1,5 +1,5 @@
 import YAML from 'yaml';
-import { ISourceMapChildren, ISourceMapElement, ILocation } from '../types';
+import { ISourceMapChildren, ISourceMapElement, ILocation } from '../../../types';
 
 export default class YAMLKeyMap {
     fileName: string;

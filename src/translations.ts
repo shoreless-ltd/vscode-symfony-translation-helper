@@ -1,13 +1,11 @@
 import { basename, extname } from 'path';
-import YAML from 'yaml';
 import { globbySync } from '@esm2cjs/globby';
 import { FileDataCache } from 'file-data-cache';
-const flatten = require('flatten-obj')();
 import { settings } from './settings';
 import { deepMergeObjects, escapeRegExp } from './utilities/utils';
-import { ITranslations } from './types';
-import YAMLKeyMap from './yaml/keyMap';
-import JSONKeyMap from './json/keyMap';
+import { DEFAULT_DOMAIN, DEFAULT_LANGUAGE, ILoadTranslationFileOptions, ITranslations } from './types';
+import { loadTranslations as loadJsonTranslations } from './parser/source/json/parser';
+import { loadTranslations as loadYamlTranslations } from './parser/source/yaml/parser';
 import log from './utilities/logger';
 
 /**
@@ -69,21 +67,6 @@ const isTranslationFileCacheEmpty = (): boolean => translationFileCache.getEntri
 const hasTranslationFileCacheChanged = (): boolean => isTranslationFileCacheEmpty() ? false : translationFileCache.getEntries().some(({ lastCheck }) => lastCheck?.wasChanged);
 
 /**
- * Parameter type definitions for `::loadTranslationFile()`.
- *
- * @property {string} filePath
- *   File path.
- * @property {string|undefined} fileContent
- *   The content loaded from the file. For convenience `undefined` is allowed, in case of an
- *   error while loading the file content.
- */
-interface ILoadTranslationFileOptions {
-    filePath: string,
-    fileContent: string|undefined,
-    language?: string
-};
-
-/**
  * Search options interface for `searchTranslationFiles()`.
  *
  * @property {string} workspaceRoot
@@ -127,115 +110,60 @@ const searchTranslationFiles = ({
 };
 
 /**
- * Extracts and returns the language code from a translation file name.
+ * Extracts and returns the domain and language code from a translation file name.
  *
  * This function is using the translation file patterns configured in the
- * extension settings to match the `[LANG]` placeholder of the given
- * file name to an actual language code.
+ * extension settings to match the `[DOMAIN]` and `[LANGCODE]` placeholders of the
+ * given file name to actual values.
  *
  * @param {string} path
  *   Translation file path.
  *
- * @return {string}
+ * @return {Object}
  *   Extracted language code, or `'und'` if no language code could be found.
  */
-const getFileLanguage = (path: string): string => {
+const getFileDomainAndLanguage = (path: string): {
+    domain: string,
+    language: string
+} => {
     const baseName = basename(path);
-    let language = 'und';
+    let domain = DEFAULT_DOMAIN;
+    let language = DEFAULT_LANGUAGE;
 
     settings().translationFilePatterns.some(value => {
-        const patternParts = value.split('[LANG]');
-        const regexPattern = escapeRegExp(patternParts[0]) + '(.*)' + (patternParts.length > 1 ? escapeRegExp(patternParts[1]) : '');
-        const languageMatch = baseName.match(new RegExp(regexPattern));
-        if (languageMatch) {
-            language = languageMatch[1];
+        const patternParts = value.replace(/\[DOMAIN\]|\[LANGCODE\]/g, ';').split(';');
+        const regexPattern = patternParts.map(patternPart => escapeRegExp(patternPart)).join('(.*)');
+        const match = baseName.match(new RegExp(regexPattern));
+        if (match) {
+            const domPos = value.indexOf('[DOMAIN]');
+            const langPos = value.indexOf('[LANGCODE]');
+            if (langPos !== -1) {
+                language = domPos === -1 ? match[1] : match[domPos < langPos ? 2 : 1];
+            }
+            if (domPos !== -1) {
+                domain = langPos === -1 ? match[1] : match[domPos < langPos ? 1 : 2];
+            }
+            else {
+                const baseNameParts = baseName.split('.');
+                if (baseNameParts.length > 2 && baseNameParts[0] && (langPos === -1 || baseNameParts[0] !== language)) {
+                    domain = baseNameParts[0];
+                }
+            }
             return true;
         }
         return false;
     });
 
-    return language.toLowerCase();
-};
-
-/**
- * Returns a workspace root folder relative path for the given file path.
- *
- * Removes any workspace root folder path and leading slash from the beginning of the
- * given path.
- *
- * @param {string} filePath
- *   The file path to transform to a relative path.
- *
- * @return {string}
- *   The relative file path, if the given path is prefixed by the workspace root
- *   folder path, the unchanged file path otherwise.
- */
-const getRelativeFilePath = (filePath: string): string => filePath.indexOf(settings().workspaceRoot + '/') === 0 ? filePath.substring(settings().workspaceRoot.length + 1) : filePath;
-
-/**
- * Extracts translation strings from an i18n JSON translation file.
- *
- * @param {ILoadTranslationFileOptions} options
- *   Load translation file options including the translation file language code.
- *
- * @return {ITranslations}
- *   Extracted translations including mapping information.
- */
-const loadJsonTranslations = (options: ILoadTranslationFileOptions): ITranslations => {
-    const fileName = getRelativeFilePath(options.filePath);
-    const language = options.language || 'und';
-    const mapped: ITranslations = {};
-
-    const flattenedData: [string, string|number|boolean] = flatten(JSON.parse(options.fileContent || '') || {});
-    if (flattenedData) {
-        const sourceMap = new JSONKeyMap(options.fileContent || '', fileName);
-        for (const [key, value] of Object.entries(flattenedData)) {
-            mapped[key] = {
-                [language]: {
-                    value: value,
-                    source: {
-                        ...(sourceMap.lookup(key) || {}),
-                        fileName: fileName
-                    }
-                }
-            };
-        }
+    // Whether the translation file is using the ICU format.
+    if (domain.indexOf('+') !== -1) {
+        // Filter ICU hint from the domain.
+        domain = domain.substring(0, domain.indexOf('+'));
     }
 
-    return mapped;
-};
-
-/**
- * Extracts translation strings from a YAML translation file.
- *
- * @param {ILoadTranslationFileOptions} options
- *   Load translation file options including the translation file language code.
- *
- * @return {ITranslations}
- *   Extracted translations including mapping information.
- */
-const loadYamlTranslations = (options: ILoadTranslationFileOptions): ITranslations => {
-    const fileName = getRelativeFilePath(options.filePath);
-    const language = options.language || 'und';
-    const mapped: ITranslations = {};
-
-    const flattenedData: [string, string|number|boolean] = flatten(YAML.parse(options.fileContent || '') || {});
-    if (flattenedData) {
-        const sourceMap = new YAMLKeyMap(options.fileContent || '', fileName);
-        for (const [key, value] of Object.entries(flattenedData)) {
-            mapped[key] = {
-                [language]: {
-                    value: value,
-                    source: {
-                        ...(sourceMap.lookup(key) || {}),
-                        fileName: fileName
-                    }
-                }
-            };
-        }
-    }
-
-    return mapped;
+    return {
+        domain: domain.toLowerCase(),
+        language: language.toLowerCase()
+    };
 };
 
 /**
@@ -252,25 +180,33 @@ const loadYamlTranslations = (options: ILoadTranslationFileOptions): ITranslatio
 const loadTranslationFile = (options: ILoadTranslationFileOptions): Object => {
     const { filePath } = options;
     const extension = extname(filePath).toLowerCase();
-    const language = options.language || getFileLanguage(filePath);
+    const parserOptions: ILoadTranslationFileOptions = {
+        ...options,
+        ...getFileDomainAndLanguage(filePath)
+    };
 
     log(`💡 Loading translation file "${filePath}".`);
     let result: Object = {};
     try {
         switch (extension) {
             case '.json':
-                result = loadJsonTranslations({ ...options, language: language });
+                result = loadJsonTranslations(parserOptions);
+                break;
+
+            case '.yaml':
+            case '.yml':
+                result = loadYamlTranslations(parserOptions);
                 break;
 
             default:
-                result = loadYamlTranslations({ ...options, language: language });
+                log(`💡 No suitable translation file parser found for "${extension}" extension of "${filePath}".`);
         }
     }
     catch (error: any) {
         log(`💡 Load translation file error for "${filePath}": ${error.toString()}`);
     }
 
-    // log('💡 Load Translation file "' + filePath + '": ' + JSON.stringify(result));
+    // log('💡 Load translation file "' + filePath + '": ' + JSON.stringify(result));
     return result;
 };
 

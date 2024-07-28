@@ -71,14 +71,14 @@
         },
         "symfonyTranslationHelper.translationFiles.patterns": {
           "type": "string",
-          "default": "messages.[LANG].yml,validators.[LANG].yml",
-          "markdownDescription": "Filename pattern(s) of the translation file(s), separated by semicolons. Use `[LANG]` as language code placeholder.  \n*Example:* `messages.[LANG].yml` *(Finds language files such as \"messages.en.yml\", \"messages.de.yml\" and so on.)*",
+          "default": "[DOMAIN].[LANGCODE].yml;[DOMAIN].[LANGCODE].yaml;[DOMAIN].[LANGCODE].json",
+          "markdownDescription": "Filename pattern(s) of the translation file(s), separated by semicolons. Use `[LANGCODE]` as language code placeholder, and optionally `[DOMAIN]` as translation domain placeholder.  \n*Example:* `[DOMAIN].[LANGCODE].yml` *(Finds all `*.yml` YAML language files such as \"messages.en.yml\", \"messages.de.yml\", \"validators.en.yml\", \"validators.de.yml\" and so on.)*",
           "order": 30
         },
         "symfonyTranslationHelper.translationFiles.folders": {
           "type": "string",
-          "default": "**/Resources/translations",
-          "markdownDescription": "Path(s) of the root folder(s) to recursively search for translation files, relative to the workspace root folder, separated by semicolons.  \n*Example:* `src/App/Resources/translations;src/AppBundle/Resources/translations`",
+          "default": "**/translations",
+          "markdownDescription": "Path(s) of the root folder(s) to recursively search for translation files, relative to the workspace root folder, separated by semicolons.  \n*Example:* `src/translations;src/App/translations;src/MyBundle/translations`",
           "order": 40
         },
         "symfonyTranslationHelper.translationFiles.ignored": {

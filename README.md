@@ -2,16 +2,19 @@
 
 Visualizes translated strings from YAML translation files in Symfony projects using Inline Decorations & Hover Support.
 
-![Symfony Translation Helper](images/symfony-translation-helper.png)
+![Symfony Translation Helper](https://i.imgur.com/kRalsto.png)
 
 ## Features
 
+* Supported translation file parsers:
+  * YAML (using the `.yaml` or `.yml` translation file extension)  
+  * JSON (using the `.json` translation file extension)  
 * Shows the translation of a translation key inline.  
 * Adds a hover popup to a translation key that shows existing or missing translations for selected target languages.
 
 ## Extension Settings
 
-This extension's default configuration should work for most Symfony projects. If you wish to alter its behavior, you can adjust the extension setting values:  
+This extension's default configuration should work for most Symfony projects using one of the supported translation file parsers. If you wish to alter the extension behavior, you can adjust the extension setting values accordingly:  
 
 Open `File` -> `Preferences` -> `Settings` (`Ctrl` + `,`)  
 Search for `symfonyTranslationHelper` to find the following settings:  
@@ -26,8 +29,8 @@ Search for `symfonyTranslationHelper` to find the following settings:
   Translation key minimum length, `0` for no minimum.  
   If a minimum length is given, shorter strings are ignored and not considered to be translation keys.  
 * `symfonyTranslationHelper.translationFiles.patterns`  
-  Filename pattern(s) of the translation file(s), separated by semicolons. Use `[LANG]` as language code placeholder.  
-  *Example:* `messages.[LANG].yml` *Finds language files such as \"messages.en.yml\", \"messages.de.yml\" and so on.*  
+  Filename pattern(s) of the translation file(s), separated by semicolons. Use `[LANGCODE]` as language code placeholder, and optionally `[DOMAIN]` as translation domain placeholder.  
+  *Example:* `[DOMAIN].[LANGCODE].yml` *Finds all `*.yml` YAML language files such as \"messages.en.yml\", \"messages.de.yml\", \"validators.en.yml\", \"validators.de.yml\" and so on.*  
 * `symfonyTranslationHelper.translationFiles.folders`  
   Path(s) of the root folder(s) to recursively search for translation files, relative to the workspace root folder, separated by semicolons.  
   Paths listed here support glob placeholders. The pattern `**/Resources/translations` would search all translation folders in all bundles of the workspace. However, this search can be very slow. To speed up searching for translation files, using a list of more specific folders is highly recommended.  

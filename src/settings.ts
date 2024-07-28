@@ -49,7 +49,7 @@ export const settings = (reload: boolean = false): ExtensionSettings => {
             workspaceRoot: resolve(workspaceRoot),
             translationFilePatterns: settingToArray(rawSettings.translationFiles.patterns),
             translationsFilenames: settingToArray(rawSettings.translationFiles.patterns).flatMap(
-                (fileName) => settingToArray(rawSettings.translationFiles.folders).map(path => path.trim().replace(/^\/+|\/+$/g, '') + '/**/' + fileName.replace(/\[LANG\]/g, '*')) || ['**/' + fileName.replace(/\[LANG\]/g, '*')],
+                (fileName) => settingToArray(rawSettings.translationFiles.folders).map(path => path.trim().replace(/^\/+|\/+$/g, '') + '/**/' + fileName.replace(/\[DOMAIN\]|\[LANGCODE\]/g, '*')) || ['**/' + fileName.replace(/\[LANG\]/g, '*')],
             ),
             preview: rawSettings.preview.enabled || false,
             keyPattern: rawSettings.translationKeyPattern || KEY_PATTERN,

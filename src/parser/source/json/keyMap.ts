@@ -1,5 +1,5 @@
 import jsonMap from 'json-source-map';
-import { ILocation } from "../types";
+import { ILocation } from "../../../types";
 
 export default class JSONKeyMap {
     fileName: string;
