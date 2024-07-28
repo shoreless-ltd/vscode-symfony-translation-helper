@@ -12,3 +12,4 @@ vsc-extension-quickstart.md
 **/.vscode-test.*
 **/esbuild.js
 node_modules/**
+**/images
