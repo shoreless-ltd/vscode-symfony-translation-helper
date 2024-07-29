@@ -1,8 +1,10 @@
-import { window, DecorationOptions } from 'vscode';
+import { window, DecorationOptions, TextEditorDecorationType } from 'vscode';
 import { settings } from './settings';
 import { IDecorateEditorOptions } from './types';
 import log from './utilities/logger';
 import { getDecorationOptions } from './editor/decoration';
+
+let translationDecorationType: TextEditorDecorationType|undefined;
 
 export function decorateEditor({
     editor,
@@ -11,7 +13,6 @@ export function decorateEditor({
     const sourceCode = editor.document.getText();
     const keyRegex: RegExp = new RegExp(`["'](${settings().keyPattern})["']`, 'g');
 
-    const decorationType = window.createTextEditorDecorationType({});
     let decorationsArray: DecorationOptions[] = [];
     const lines = sourceCode.split('\n');
     let match: RegExpExecArray|null = null;
@@ -40,5 +41,10 @@ export function decorateEditor({
         }
     }
 
-    editor.setDecorations(decorationType, decorationsArray);
+    if (translationDecorationType) {
+        translationDecorationType.dispose();
+    }
+    translationDecorationType = window.createTextEditorDecorationType({});
+
+    editor.setDecorations(translationDecorationType, decorationsArray);
 }
