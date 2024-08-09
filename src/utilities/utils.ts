@@ -1,3 +1,5 @@
+import { Position, Range } from "vscode";
+
 /**
  * Escapes a potentially unsafe string for use in HTML markup.
  *
@@ -80,4 +82,30 @@ export const deepMergeObjects = (targetObject: any, sourceObject: any) => {
         }
     }
     return targetObject;
+};
+
+export const subStrCount = (needle: string, haystack: string): number => haystack.split(needle).length - 1;
+
+export const trimmedRange = (startPos: Position, text: string) => {
+    let line = startPos.line;
+    let column = startPos.character;
+
+    const trimmed = text.trim();
+    const tStart = text.indexOf(trimmed);
+    const tEnd = tStart + trimmed.length;
+
+    for (let i = 0; i < tEnd; i++) {
+        if (i === tStart) {
+            startPos = new Position(line, column);
+        }
+        if (text.charAt(i) === '\n') {
+            line++;
+            column = 0;
+        }
+        else {
+            column++;
+        }
+    }
+
+    return new Range(startPos, new Position(line, column));
 };

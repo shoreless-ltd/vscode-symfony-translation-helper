@@ -14,7 +14,7 @@ import {
 import { extname, basename } from 'path';
 import { settings } from './settings';
 import log from './utilities/logger';
-import { decorateEditor } from './decorateEditor';
+import { decorateTranslations } from './editor/documentDecorator';
 import { getTranslations, clearTranslationsCache, isTranslationFile } from './translations';
 import { ISourceMapRange } from './types';
 
@@ -87,13 +87,18 @@ export const activate = async (context: ExtensionContext) => {
         }
 
         if (!settings().extensions.includes(extname(filePath).toLowerCase()) || isTranslationFile(filePath)) {
-            log(`Ignored: ${basename(filePath)}`);
+            log(`Ignored document "${basename(filePath)}".`);
             return;
         }
 
-        decorateEditor({
-            editor,
-            translations: getTranslations()
-        });
+        try {
+            decorateTranslations({
+                editor,
+                translations: getTranslations()
+            });
+        }
+        catch (ex: any) {
+            log('Decoration error', 'error', ex);
+        }
     }
 };

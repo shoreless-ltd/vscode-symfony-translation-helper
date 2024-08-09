@@ -1,16 +1,16 @@
 import YAML from 'yaml';
-import { ISourceMapChildren, ISourceMapElement, ILocation } from '../../../types';
+import { ISourceMapChildren, ISourceMapElement, ILocation, ISourceMap, ISourceMapConstructor } from '../../../types';
 
-export default class YAMLKeyMap {
-    fileName: string;
-    keyMap: ISourceMapElement;
+const YAMLSourceMap: ISourceMapConstructor = class YAMLSourceMap implements ISourceMap {
+    #fileName: string;
+    #sourceMap: ISourceMapElement;
 
     constructor(content: string, fileName: string) {
         const lineCounter = new YAML.LineCounter();
         const document = YAML.parseDocument(content, { keepSourceTokens: true, lineCounter: lineCounter });
 
-        this.fileName = fileName;
-        this.keyMap = {
+        this.#fileName = fileName;
+        this.#sourceMap = {
             children: this.index(document, lineCounter)
         };
     }
@@ -76,6 +76,9 @@ export default class YAMLKeyMap {
         return null;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     lookup(path: string|string[]): ILocation|null {
         if (typeof path === 'string' || path instanceof String) {
             path = path
@@ -84,7 +87,7 @@ export default class YAMLKeyMap {
                 .filter(t => t !== '');
         }
 
-        const keyMapEntry: ISourceMapElement|null = path.reduce((xs: ISourceMapElement|null, x: string): ISourceMapElement|null => xs?.children?.[x] ?? null, this.keyMap);
+        const keyMapEntry: ISourceMapElement|null = path.reduce((xs: ISourceMapElement|null, x: string): ISourceMapElement|null => xs?.children?.[x] ?? null, this.#sourceMap);
 
         if (!keyMapEntry) {
             return null;
@@ -92,7 +95,9 @@ export default class YAMLKeyMap {
 
         return {
             ...keyMapEntry,
-            fileName: this.fileName,
+            fileName: this.#fileName,
         };
     }
-}
+};
+
+export default YAMLSourceMap;

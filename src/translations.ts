@@ -2,8 +2,8 @@ import { basename, extname } from 'path';
 import { globbySync } from '@esm2cjs/globby';
 import { FileDataCache } from 'file-data-cache';
 import { settings } from './settings';
-import { deepMergeObjects, escapeRegExp } from './utilities/utils';
-import { DEFAULT_DOMAIN, DEFAULT_LANGUAGE, ILoadTranslationFileOptions, ITranslations } from './types';
+import { deepMergeObjects, escapeRegExp, subStrCount } from './utilities/utils';
+import { DEFAULT_DOMAIN, DEFAULT_LOCALE, ILoadTranslationFileOptions, ITranslations } from './types';
 import { loadTranslations as loadJsonTranslations } from './parser/source/json/parser';
 import { loadTranslations as loadYamlTranslations } from './parser/source/yaml/parser';
 import log from './utilities/logger';
@@ -98,14 +98,14 @@ const searchTranslationFiles = ({
     filenames,
     ignoredFolders,
 }: ISearchTranslationFilesOptions): string[] => {
-    log(`👨🏻‍💻 Searching for translation files.`);
+    log(`Searching for translation files.`);
     const paths = globbySync(filenames, {
         cwd: workspaceRoot,
         onlyFiles: true,
         expandDirectories: false,
         ignore: ignoredFolders
     });
-    log('💡 Found: ' + JSON.stringify(paths));
+    log('Found translation files:', 'debug', paths);
     return paths;
 };
 
@@ -113,56 +113,67 @@ const searchTranslationFiles = ({
  * Extracts and returns the domain and language code from a translation file name.
  *
  * This function is using the translation file patterns configured in the
- * extension settings to match the `[DOMAIN]` and `[LANGCODE]` placeholders of the
+ * extension settings to match the `[DOMAIN]` and `[LOCALE]` placeholders of the
  * given file name to actual values.
  *
  * @param {string} path
  *   Translation file path.
  *
  * @return {Object}
- *   Extracted language code, or `'und'` if no language code could be found.
+ *   Object with extracted locale, or `DEFAULT_LOCALE` if no language code could be found,
+ *   and domain, or `DEFAULT_DOMAIN`, if no domain could be extracted.
  */
-const getFileDomainAndLanguage = (path: string): {
+const getFileDomainAndLocale = (path: string): {
     domain: string,
-    language: string
+    locale: string
 } => {
-    const baseName = basename(path);
     let domain = DEFAULT_DOMAIN;
-    let language = DEFAULT_LANGUAGE;
+    let locale = DEFAULT_LOCALE;
 
     settings().translationFilePatterns.some(value => {
-        const patternParts = value.replace(/\[DOMAIN\]|\[LANGCODE\]/g, ';').split(';');
-        const regexPattern = patternParts.map(patternPart => escapeRegExp(patternPart)).join('(.*)');
-        const match = baseName.match(new RegExp(regexPattern));
+        // Compare translation file pattern with parent directories, such as `[LOCALE]/translations.json`,
+        // to the corresponding folders of the given file path.
+        const compare = path.split('/').slice(-1 * (subStrCount('/', value) + 1)).join('/');
+
+        // Replace `[DOMAIN]` and `[LOCALE]` placeholders in translation file pattern with regular expression
+        // groups and escape the remaining pattern text.
+        const regexPattern = value.replace(/\[DOMAIN\]|\[LOCALE\]/g, ';').split(';').map(patternPart => escapeRegExp(patternPart)).join('(.*)');
+
+        // Match the pattern against the translation file path fragment.
+        const match = compare.match(new RegExp(regexPattern));
         if (match) {
             const domPos = value.indexOf('[DOMAIN]');
-            const langPos = value.indexOf('[LANGCODE]');
+            const langPos = value.indexOf('[LOCALE]');
+
             if (langPos !== -1) {
-                language = domPos === -1 ? match[1] : match[domPos < langPos ? 2 : 1];
+                locale = domPos === -1 ? match[1] : match[domPos < langPos ? 2 : 1];
             }
+
             if (domPos !== -1) {
                 domain = langPos === -1 ? match[1] : match[domPos < langPos ? 1 : 2];
             }
-            else {
-                const baseNameParts = baseName.split('.');
-                if (baseNameParts.length > 2 && baseNameParts[0] && (langPos === -1 || baseNameParts[0] !== language)) {
+            else if (settings().parsingMode === 'symfony') {
+                const baseNameParts = basename(path).split('.');
+                if (baseNameParts.length > 1 && baseNameParts[0] && (langPos === -1 || baseNameParts[0] !== locale)) {
                     domain = baseNameParts[0];
                 }
             }
+
             return true;
         }
+
         return false;
     });
 
-    // Whether the translation file is using the ICU format.
+    // Whether the translation file name is using the ICU format indicator.
     if (domain.indexOf('+') !== -1) {
         // Filter ICU hint from the domain.
         domain = domain.substring(0, domain.indexOf('+'));
     }
-
+log('Domain and locale', 'error', path, domain, locale);
     return {
         domain: domain.toLowerCase(),
-        language: language.toLowerCase()
+        locale: locale.toLowerCase()
     };
 };
 
@@ -182,10 +193,10 @@ const loadTranslationFile = (options: ILoadTranslationFileOptions): Object => {
     const extension = extname(filePath).toLowerCase();
     const parserOptions: ILoadTranslationFileOptions = {
         ...options,
-        ...getFileDomainAndLanguage(filePath)
+        ...getFileDomainAndLocale(filePath)
     };
 
-    log(`💡 Loading translation file "${filePath}".`);
+    log(`Loading translation file "${filePath}".`);
     let result: Object = {};
     try {
         switch (extension) {
@@ -199,14 +210,14 @@ const loadTranslationFile = (options: ILoadTranslationFileOptions): Object => {
                 break;
 
             default:
-                log(`💡 No suitable translation file parser found for "${extension}" extension of "${filePath}".`);
+                log(`No suitable translation file parser found for "${extension}" extension of "${filePath}".`, 'error');
         }
     }
     catch (error: any) {
-        log(`💡 Load translation file error for "${filePath}": ${error.toString()}`);
+        log(`Load translation file error for "${filePath}":`, 'error', error);
     }
 
-    // log('💡 Load translation file "' + filePath + '": ' + JSON.stringify(result));
+    log(`Load translation file "${filePath}":`, 'debug', result);
     return result;
 };
 
@@ -268,10 +279,11 @@ export const getTranslations = (): ITranslations => {
     }
     else {
         if (hasTranslationFileCacheChanged()) {
+            log(`Translation file(s) changed.`);
             allTranslations = translationFileCache
                 .getValues()
                 .reduce((result, keyValues) => deepMergeObjects(result, keyValues), {});
-            log(`Translation file(s) changed. Translations: ${JSON.stringify(allTranslations)}`);
+            log(`New translations:`, 'debug', allTranslations);
         }
     }
 

@@ -1,15 +1,18 @@
 import jsonMap from 'json-source-map';
-import { ILocation } from "../../../types";
+import { ILocation, ISourceMap, ISourceMapConstructor } from "../../../types";
 
-export default class JSONKeyMap {
-    fileName: string;
-    keyMap;
+const JSONSourceMap: ISourceMapConstructor =  class JSONSourceMap implements ISourceMap {
+    #fileName: string;
+    #sourceMap;
 
     constructor(content: string, fileName: string) {
-        this.fileName = fileName;
-        this.keyMap = jsonMap.parse(content);
+        this.#fileName = fileName;
+        this.#sourceMap = jsonMap.parse(content);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     lookup(path: string|string[]): ILocation|null {
         if (typeof path === 'string' || path instanceof String) {
             path = path
@@ -19,7 +22,7 @@ export default class JSONKeyMap {
         }
 
         path = '/' + path.join('/');
-        const keyMapEntry = this.keyMap.pointers?.[path] || null;
+        const keyMapEntry = this.#sourceMap.pointers?.[path] || null;
 
         if (!keyMapEntry) {
             return null;
@@ -34,7 +37,9 @@ export default class JSONKeyMap {
                 start: { line: keyMapEntry.value.line, col: keyMapEntry.value.column },
                 end: { line: keyMapEntry.valueEnd.line, col: keyMapEntry.valueEnd.column }
             },
-            fileName: this.fileName
+            fileName: this.#fileName
         };
     }
-}
+};
+
+export default JSONSourceMap;

@@ -1,6 +1,6 @@
-import { DEFAULT_DOMAIN, DEFAULT_LANGUAGE, ILoadTranslationFileOptions, ITranslations } from "../../../types";
+import { DEFAULT_DOMAIN, DEFAULT_LOCALE, ILoadTranslationFileOptions, ITranslations } from "../../../types";
 import { getRelativeFilePath } from "../../../utilities/workspace";
-import JSONKeyMap from "./keyMap";
+import JSONSourceMap from "./sourceMp";
 const flatten = require('flatten-obj')();
 
 /**
@@ -15,16 +15,16 @@ const flatten = require('flatten-obj')();
 export const loadTranslations = (options: ILoadTranslationFileOptions): ITranslations => {
     const fileName = getRelativeFilePath(options.filePath);
     const domain = options.domain || DEFAULT_DOMAIN;
-    const language = options.language || DEFAULT_LANGUAGE;
+    const locale = options.locale || DEFAULT_LOCALE;
     const mapped: ITranslations = {};
 
     const flattenedData: [string, string|number|boolean] = flatten(JSON.parse(options.fileContent || '') || {});
     if (flattenedData) {
-        const sourceMap = new JSONKeyMap(options.fileContent || '', fileName);
+        const sourceMap = new JSONSourceMap(options.fileContent || '', fileName);
         for (const [key, value] of Object.entries(flattenedData)) {
             mapped[key] = {
                 [domain]: {
-                    [language]: {
+                    [locale]: {
                         value: value,
                         source: {
                             ...(sourceMap.lookup(key) || {}),

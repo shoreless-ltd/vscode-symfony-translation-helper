@@ -48,83 +48,139 @@
         "title": "Open translation file"
       }
     ],
-    "configuration": {
-      "title": "Symfony Translation Helper",
-      "properties": {
-        "symfonyTranslationHelper.extensions": {
-          "type": "string",
-          "default": "php;twig;js;jsx;ts;tsx",
-          "markdownDescription": "Extensions of the files consuming translations, separated by semicolons.  \n*Example:* `php;twig`",
-          "order": 0
-        },
-        "symfonyTranslationHelper.translationKeyPattern": {
-          "type": "string",
-          "default": "[a-zA-Z0-9._-]+",
-          "markdownDescription": "RegEx pattern used when searching translation keys in source code strings.  \n*Example:* `[a-zA-Z0-9._-]+` *(Allows upper and lower case letters from a-z, numbers, dot, dash and underscore between one and unlimited times.)*",
-          "order": 10
-        },
-        "symfonyTranslationHelper.translationKeyMinLength": {
-          "type": "integer",
-          "default": 5,
-          "markdownDescription": "Translation key minimum length, `0` for no minimum.",
-          "order": 20
-        },
-        "symfonyTranslationHelper.translationFiles.patterns": {
-          "type": "string",
-          "default": "[DOMAIN].[LANGCODE].yml;[DOMAIN].[LANGCODE].yaml;[DOMAIN].[LANGCODE].json",
-          "markdownDescription": "Filename pattern(s) of the translation file(s), separated by semicolons. Use `[LANGCODE]` as language code placeholder, and optionally `[DOMAIN]` as translation domain placeholder.  \n*Example:* `[DOMAIN].[LANGCODE].yml` *(Finds all `*.yml` YAML language files such as \"messages.en.yml\", \"messages.de.yml\", \"validators.en.yml\", \"validators.de.yml\" and so on.)*",
-          "order": 30
-        },
-        "symfonyTranslationHelper.translationFiles.folders": {
-          "type": "string",
-          "default": "**/translations",
-          "markdownDescription": "Path(s) of the root folder(s) to recursively search for translation files, relative to the workspace root folder, separated by semicolons.  \n*Example:* `src/translations;src/App/translations;src/MyBundle/translations`",
-          "order": 40
-        },
-        "symfonyTranslationHelper.translationFiles.ignored": {
-          "type": "string",
-          "default": "vendor;node_modules;public;web;build;.git",
-          "markdownDescription": "Folder name(s) ignored when recursively looking for translation files, separated by semicolons.  \n*Example:* `vendor;.git;public`",
-          "order": 50
-        },
-        "symfonyTranslationHelper.preview.enabled": {
-          "type": "boolean",
-          "default": "true",
-          "markdownDescription": "Whether inline translation previews are enabled.",
-          "order": 60
-        },
-        "symfonyTranslationHelper.preview.language": {
-          "type": "string",
-          "default": "en",
-          "markdownDescription": "Language to use for showing inline translation previews.  \n*Example:* `en`",
-          "order": 70
-        },
-        "symfonyTranslationHelper.preview.color": {
-          "type": "string",
-          "default": "green",
-          "markdownDescription": "Color of the translation preview text (hex value or html color name).  \n*Example:* `green`",
-          "order": 80
-        },
-        "symfonyTranslationHelper.hover.enabled": {
-          "type": "boolean",
-          "default": "true",
-          "markdownDescription": "Whether hover popups with links to translation sources are enabled.",
-          "order": 90
-        },
-        "symfonyTranslationHelper.requiredLanguages": {
-          "type": "string",
-          "default": "en",
-          "markdownDescription": "Required languages, separated by semicolons. Indicates missing translations for a found translation string.  \n*Example:* `en;de`",
-          "order": 100
-        },
-        "symfonyTranslationHelper.verbose": {
-          "type": "boolean",
-          "default": "false",
-          "markdownDescription": "Whether verbose output logs are generated in the Debug Console.",
-          "order": 1000
+    "configuration": [
+      {
+        "title": "Translation consumers",
+        "properties": {
+          "symfonyTranslationHelper.extensions": {
+            "type": "string",
+            "default": "php;twig;js;jsx;ts;tsx",
+            "markdownDescription": "Extensions of the files consuming translations, separated by semicolons.  \n*Example:* `php;twig`",
+            "order": 0
+          },
+          "symfonyTranslationHelper.parsingMode": {
+            "type": "string",
+            "default": "generic",
+            "enum": [
+              "generic",
+              "symfony"
+            ],
+            "enumItemLabels": [
+              "Generic",
+              "Symfony + Generic"
+            ],
+            "enumDescriptions": [
+              "RegEx pattern based translation key search",
+              "Symfony specific detection where applicable (e.g., within Twig files) and RegEx based as fallback"
+            ],
+            "markdownDescription": "How to identify translation keys in source code.",
+            "order": 10
+          },
+          "symfonyTranslationHelper.domainSupport": {
+            "type": "boolean",
+            "default": "true",
+            "markdownDescription": "Whether translation domain support is enabled. Automatically true for \"Symfony + Generic \" parsing mode.",
+            "order": 15
+          },
+          "symfonyTranslationHelper.translationKeyPattern": {
+            "type": "string",
+            "default": "[a-zA-Z0-9._-]+",
+            "markdownDescription": "RegEx pattern used when searching translation keys in source code strings.  \nThe default setting is intended for key-based translations and should be changed to `.+` for source language based translations.  \n*Example:* `[a-zA-Z0-9._-]+` *(Allows upper and lower case letters from a-z, numbers, dot, dash and underscore between one and unlimited times.)*",
+            "order": 20
+          },
+          "symfonyTranslationHelper.translationKeyMinLength": {
+            "type": "integer",
+            "default": 5,
+            "markdownDescription": "Translation key minimum length, `0` for no minimum.",
+            "order": 30
+          }
+        }
+      },
+      {
+        "title": "Translation sources",
+        "properties": {
+          "symfonyTranslationHelper.translationFiles.patterns": {
+            "type": "string",
+            "default": "[DOMAIN].[LOCALE].yml;[DOMAIN].[LOCALE].yaml;[DOMAIN].[LOCALE].json",
+            "markdownDescription": "Filename pattern(s) of the translation file(s), separated by semicolons. Use `[LOCALE]` as language code placeholder, and optionally `[DOMAIN]` as translation domain placeholder.  \n*Example:* `[DOMAIN].[LOCALE].yml` *(Finds all `*.yml` YAML language files such as \"messages.en.yml\", \"messages.de.yml\", \"validators.en.yml\", \"validators.de.yml\" and so on.)*",
+            "order": 40
+          },
+          "symfonyTranslationHelper.translationFiles.folders": {
+            "type": "string",
+            "default": "**/translations",
+            "markdownDescription": "Path(s) of the root folder(s) to recursively search for translation files, relative to the workspace root folder, separated by semicolons.  \n*Example:* `src/translations;src/App/translations;src/MyBundle/translations`",
+            "order": 50
+          },
+          "symfonyTranslationHelper.translationFiles.ignored": {
+            "type": "string",
+            "default": "vendor;node_modules;public;web;build;.git",
+            "markdownDescription": "Folder name(s) ignored when recursively looking for translation files, separated by semicolons.  \n*Example:* `vendor;.git;public`",
+            "order": 60
+          }
+        }
+      },
+      {
+        "title": "Inline preview",
+        "properties": {
+          "symfonyTranslationHelper.preview.enabled": {
+            "type": "boolean",
+            "default": "true",
+            "markdownDescription": "Whether inline translation previews are enabled.",
+            "order": 70
+          },
+          "symfonyTranslationHelper.preview.language": {
+            "type": "string",
+            "default": "en",
+            "markdownDescription": "Language to use for showing inline translation previews.  \n*Example:* `en`",
+            "order": 80
+          },
+          "symfonyTranslationHelper.preview.color": {
+            "type": "string",
+            "default": "green",
+            "markdownDescription": "Color of the translation preview text (hex value or html color name).  \n*Example:* `green`",
+            "order": 90
+          }
+        }
+      },
+      {
+        "title": "Hover popups",
+        "properties": {
+          "symfonyTranslationHelper.hover.enabled": {
+            "type": "boolean",
+            "default": "true",
+            "markdownDescription": "Whether hover popups with links to translation sources are enabled.",
+            "order": 100
+          },
+          "symfonyTranslationHelper.requiredLanguages": {
+            "type": "string",
+            "default": "en",
+            "markdownDescription": "Required languages, separated by semicolons. Indicates missing translations for a found translation string.  \n*Example:* `en;de`",
+            "order": 110
+          }
+        }
+      },
+      {
+        "title": "Other settings",
+        "properties": {
+          "symfonyTranslationHelper.logLevel": {
+            "type": "string",
+            "default": "error",
+            "enum": [
+              "error",
+              "info",
+              "verbose"
+            ],
+            "enumItemLabels": [
+              "Errors only",
+              "Errors + Info",
+              "Verbose"
+            ],
+            "markdownDescription": "Level of log messages generated in the Debug Console.",
+            "order": 1000
+          }
         }
       }
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",
@@ -153,10 +209,14 @@
   },
   "dependencies": {
     "@esm2cjs/globby": "^13.2.2",
+    "astq": "^2.8.1",
+    "chevrotain": "^10.5.0",
     "file-data-cache": "^2.1.1",
     "find-files-recur": "^1.1.1",
     "flatten-obj": "^3.1.1",
     "json-source-map": "^0.6.1",
+    "twig-lexer": "^1.0.0",
+    "twig-parser": "^0.2.2",
     "yaml": "^2.4.5"
   }
 }

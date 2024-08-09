@@ -1,12 +1,13 @@
-import { DecorationOptions, MarkdownString, Position, Range, Uri } from "vscode";
-import { DEFAULT_DOMAIN, IEditorLine, IMappedTranslations, ITranslations } from "../types";
+import { DecorationOptions, MarkdownString, Uri } from "vscode";
+import { DEFAULT_DOMAIN, ITranslationKey, ITranslations } from "../types";
 import { settings } from "../settings";
 import { escapeHtml, getRandomColor } from "../utilities/utils";
 
 type ContextTableRow = {
     domain?: string,
-    language: string,
+    locale: string,
     message: string,
+    color: string,
     editCommand: Uri|string|null
 };
 
@@ -14,46 +15,71 @@ const MISSING_TRANSLATION_MESSAGE = `[missing]`;
 const EMPTY_TRANSLATION_MESSAGE = `[empty]`;
 
 const renderTranslationTableHeader = (showDomain: boolean) => {
-    let header = `<th align="left">Langcode</th><th align="left">Translation</th><th>&nbsp</th>`;
+    let header = `<th align="left"><small>Locale</small></th><th align="left"><small>Translation</small></th><th>&nbsp</th>`;
     if (showDomain) {
-        header = `<th align="left">Domain</th>` + header;
+        header = `<th align="left"><small>Domain</small></th>` + header;
     }
-    return `<tr>${header}</tr>`;
+    return `<thead><tr>${header}</tr></thead>`;
 };
 
 const renderTranslationTableRow = (row: ContextTableRow) => {
     // Decide between machine translate and edit command based on the message
-    const message = (row.message === MISSING_TRANSLATION_MESSAGE) ? `<span style="color:#ff0000;">${escapeHtml(row.message)}</span>` : escapeHtml(row.message);
+    const message = `<span style="color:${row.color};">${escapeHtml(row.message)}</span>`;
     const actionCommandLink = (row.message === MISSING_TRANSLATION_MESSAGE) || !row.editCommand ? '' : `<a href="${row.editCommand}">$(edit)</a>`;
-    let messageListing = `<td><strong>${escapeHtml(row.language)}&nbsp;</strong></td><td>${message}&nbsp;</td><td>${actionCommandLink}&nbsp;</td>`;
+    let messageListing = `<td>${escapeHtml(row.locale)}&nbsp;</td><td>${message}&nbsp;</td><td>${actionCommandLink}&nbsp;</td>`;
     if (row.domain) {
-        messageListing = `<td><strong>${escapeHtml(row.domain)}&nbsp;</strong></td>` + messageListing;
+        messageListing = `<td>${escapeHtml(row.domain)}&nbsp;</td>` + messageListing;
     }
     return `<tr>${messageListing}</tr>`;
 };
 
-const contextTooltip = (translations: IMappedTranslations) => {
-    const showDomain = Object.keys(translations).length > 1 || !translations?.[DEFAULT_DOMAIN];
+const contextTooltip = (key: ITranslationKey, allTranslations: ITranslations) => {
+    let text = `<strong>Translation:</strong> <span style="color:${renderTranslationColor(key, allTranslations)};"><strong>${renderTranslation(key, allTranslations)}</strong></span>\n`;
+    const defaultLocale = key.locale || settings().previewLocale;
 
-    // Generate rows for each language tag
-    let contextTableRows: ContextTableRow[] = [];
-    Object.keys(translations).forEach(domain => {
-        let languageTags = [...new Set([...settings().requiredLanguages, ...Object.keys(translations[domain])])];
-        languageTags.forEach((languageTag) => {
-            contextTableRows.push({
-                domain: showDomain ? domain : undefined,
-                language: languageTag.toUpperCase(),
-                message: translations[domain]?.[languageTag] ? translations[domain][languageTag]['value'].toString() : MISSING_TRANSLATION_MESSAGE,
-                editCommand: translations[domain]?.[languageTag] ? Uri.parse(`command:symfonyTranslationHelper.openTranslationFile?${encodeURI(JSON.stringify({
-                    fileName: translations[domain][languageTag].source.fileName,
-                    range: translations[domain][languageTag].source?.value || translations[domain][languageTag].source?.key
-                }))}`) : null
+    let subTitleParts = [];
+    if (key.value) {
+        subTitleParts.push(`Key: <span style="color:var(--vscode-editor-foreground);"><strong>${key.value}</strong></span>`);
+    }
+    if (settings().domainSupport && key.domain) {
+        subTitleParts.push(`Domain: <span style="color:var(--vscode-editor-foreground);"><strong>${key.domain}</strong></span>`);
+    }
+    if (defaultLocale) {
+        subTitleParts.push(`Locale: <span style="color:var(--vscode-editor-foreground);"><strong>${defaultLocale.toUpperCase()}</strong></span>`);
+    }
+    if (subTitleParts.length) {
+        text += `<hr><hr>\n<small>${subTitleParts.join('&nbsp;&nbsp;|&nbsp;&nbsp;')}</small>`;
+    }
+    text += `\n`;
+
+    const translations = allTranslations?.[key.value];
+
+    if (translations || (settings().domainSupport && key.domain)) {
+        const showDomain = settings().domainSupport && (Object.keys(translations).length > 1 || !translations?.[DEFAULT_DOMAIN]);
+
+        // Generate rows for each language tag
+        let contextTableRows: ContextTableRow[] = [];
+        let domains = settings().domainSupport && key.domain ? [...new Set([...[key.domain], ...Object.keys(translations)])] : Object.keys(translations);
+        domains.forEach(domain => {
+            let locales = [...new Set([ ...(defaultLocale ? [defaultLocale] : []), ...settings().requiredLanguages, ...Object.keys(translations?.[domain] || [])])];
+            locales.forEach((locale) => {
+                contextTableRows.push({
+                    domain: showDomain ? domain : undefined,
+                    locale: locale.toUpperCase(),
+                    message: renderTranslation(key, allTranslations, domain, locale),
+                    color: renderTranslationColor(key, allTranslations, domain, locale),
+                    editCommand: translations?.[domain]?.[locale] ? Uri.parse(`command:symfonyTranslationHelper.openTranslationFile?${encodeURI(JSON.stringify({
+                        fileName: translations[domain][locale].source.fileName,
+                        range: translations[domain][locale].source?.value || translations[domain][locale].source?.key
+                    }))}`) : null
+                });
             });
         });
-    });
+        //text += `<hr>\n<small>All translations${showDomain ? ' in all domains' : ''}</small><br>\n<br>\n`;
+        text += `<hr><hr>\n<table>${renderTranslationTableHeader(showDomain)}<tbody>${contextTableRows.map(renderTranslationTableRow).join('')}</tbody></table>`;
+    }
 
-    const contextTable = `<strong>Translations</strong><hr>  \n<table>${renderTranslationTableHeader(showDomain)}${contextTableRows.map(renderTranslationTableRow).join('')}</table>`;
-    const tooltip = new MarkdownString(contextTable, true);
+    const tooltip = new MarkdownString(text, true);
 
     tooltip.supportHtml = true;
     tooltip.isTrusted = true;
@@ -62,12 +88,25 @@ const contextTooltip = (translations: IMappedTranslations) => {
     return tooltip;
 };
 
-export const getDecorationOptions = (line: IEditorLine, match: string, translations: ITranslations): DecorationOptions|null => {
-    if ((!settings().preview && !settings().hover) || !translations?.[match] || line.value.indexOf(match) === -1) {
+const renderTranslation = (
+    key: ITranslationKey,
+    translations: ITranslations,
+    domain: string = key.domain || (translations?.[key.value] ? Object.keys(translations[key.value])[0] : DEFAULT_DOMAIN),
+    locale: string = key.locale || settings().previewLocale
+) => translations?.[key.value]?.[domain]?.[locale] ? translations[key.value]?.[domain]?.[locale]?.['value'].toString() || EMPTY_TRANSLATION_MESSAGE : MISSING_TRANSLATION_MESSAGE;
+
+const renderTranslationColor = (
+    key: ITranslationKey,
+    translations: ITranslations,
+    domain: string = key.domain || (translations?.[key.value] ? Object.keys(translations[key.value])[0] : DEFAULT_DOMAIN),
+    locale: string = key.locale || settings().previewLocale
+) => translations?.[key.value]?.[domain]?.[locale] ? (translations[key.value]?.[domain]?.[locale]?.['value'].toString() ? `var(--vscode-editor-foreground)` : `var(--vscode-editorWarning-foreground)`) : `var(--vscode-editorError-foreground)`;
+
+export const getDecorationOptions = (key: ITranslationKey, translations: ITranslations): DecorationOptions|null => {
+    if (!(settings().preview || !settings().hover)) {
         return null;
     }
 
-    const previewLanguageTag = settings().previewLanguageTag;
     let color = settings().previewColor || 'green';
     if (color.toLowerCase() === 'random') {
         color = getRandomColor();
@@ -76,16 +115,13 @@ export const getDecorationOptions = (line: IEditorLine, match: string, translati
     return {
         renderOptions: settings().preview ? {
             after: {
-                contentText: translations[match]?.[Object.keys(translations[match])[0]]?.[previewLanguageTag] ? translations[match]?.[Object.keys(translations[match])[0]]?.[previewLanguageTag]?.['value'].toString() || EMPTY_TRANSLATION_MESSAGE : MISSING_TRANSLATION_MESSAGE,
+                contentText: renderTranslation(key, translations),
                 fontStyle: 'italic',
                 margin: '0 .5rem',
-                color: translations[match]?.[Object.keys(translations[match])[0]]?.[previewLanguageTag] ? (color || 'green') : 'ff0000',
+                color: translations[key.value]?.[key.domain || Object.keys(translations[key.value])[0]]?.[key.locale || settings().previewLocale] ? (color || 'green') : `var(--vscode-editorError-foreground)`,
             },
         } : undefined,
-        hoverMessage: settings().hover ? contextTooltip(translations[match]) : undefined,
-        range: new Range(
-            new Position(line.lineNumber, line.value.indexOf(match) - 1),
-            new Position(line.lineNumber, line.value.indexOf(match) + match.length + 1),
-        ),
+        hoverMessage: settings().hover ? contextTooltip(key, translations) : undefined,
+        range: key.range,
     };
 };
