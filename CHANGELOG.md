@@ -1,10 +1,21 @@
 # Change Log
 
-## [1.3.0](https://marketplace.visualstudio.com/_apis/public/gallery/publishers/shoreless/vsextensions/symfony-translation-helper/1.3.0/vspackage) <span style="font-size: 0.5em">coming soon</span>  
+## [1.3.1](https://marketplace.visualstudio.com/_apis/public/gallery/publishers/shoreless/vsextensions/symfony-translation-helper/1.3.1/vspackage) <span style="font-size: 0.5em">2024-08-21</span>  
+
+### Added  
+
+- New extension setting `symfonyTranslationHelper.logToChannel`.  
+
+### Bugfixes  
+
+- Fix missing dependencies that prevented the extension to start properly.  
+
+## [1.3.0](https://marketplace.visualstudio.com/_apis/public/gallery/publishers/shoreless/vsextensions/symfony-translation-helper/1.3.0/vspackage) <span style="font-size: 0.5em">2024-08-09</span>  
 
 ### Added  
 
 - New extension setting `symfonyTranslationHelper.parsingMode`.  
+- New extension setting `symfonyTranslationHelper.domainSupport` to disable domain indication in hover popups.  
 - Twig file parser for Symfony parsing mode supporting `{% trans %}` tag, `trans` filter and `{% trans_default_domain %}` tag to identify translation keys and domain in Twig templates.  
 
 ### Changed  

@@ -24,6 +24,7 @@ export type ExtensionSettings = {
     ignoredFolders: string[],
     keyTemplate?: string,
     logLevel: string,
+    debugToChannel: boolean,
     previewColor: string,
 };
 
@@ -65,7 +66,8 @@ export const settings = (reload: boolean = false): ExtensionSettings => {
             extensions: settingToArray(rawSettings.extensions).map((ext) => ext[0] === '.' ? ext : `.${ext}`),
             translationsFolders: settingToArray(rawSettings.translationFiles.folders).map(path => path.replace(/\\/, '/')),
             ignoredFolders: settingToArray(rawSettings.translationFiles.ignored).map(path => '**/' + path.trim().replace(/\\/, '/').replace(/^\/+|\/+$/g, '') + '/**'),
-            logLevel: rawSettings.logLevel
+            logLevel: rawSettings.logLevel,
+            debugToChannel: rawSettings.logToChannel || false
         };
         extensionSettings = res;
     }

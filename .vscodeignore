@@ -12,4 +12,9 @@ vsc-extension-quickstart.md
 **/.vscode-test.*
 **/esbuild.js
 node_modules/**
+!node_modules/asty/**
+!node_modules/peggy/**
+!node_modules/pegjs-otf/**
+!node_modules/pegjs-util/**
+!node_modules/cache-lru/**
 **/images

@@ -61,7 +61,6 @@ export const activate = async (context: ExtensionContext) => {
 
     // Change editor handler.
     window.onDidChangeActiveTextEditor((editor: TextEditor|undefined) => {
-        log('Event: Editor changed');
         if (editor) {
             showTranslations(editor);
         }
@@ -69,7 +68,6 @@ export const activate = async (context: ExtensionContext) => {
 
     // Change text document handler.
     workspace.onDidChangeTextDocument((event: TextDocumentChangeEvent) => {
-        log('Event: Text changed');
         const activeEditor = window.activeTextEditor;
         if (activeEditor && event.document === activeEditor.document) {
             showTranslations(activeEditor);
@@ -87,7 +85,6 @@ export const activate = async (context: ExtensionContext) => {
         }
 
         if (!settings().extensions.includes(extname(filePath).toLowerCase()) || isTranslationFile(filePath)) {
-            log(`Ignored document "${basename(filePath)}".`);
             return;
         }
 

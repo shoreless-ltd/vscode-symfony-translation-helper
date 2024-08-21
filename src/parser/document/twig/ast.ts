@@ -1,7 +1,7 @@
 import { TextDocument } from 'vscode';
-import { TwigLexer } from './lexer.js';
-import { TwigParser } from './parser.js';
-import { Node } from './types.js';
+import { TwigLexer } from './lexer';
+import { TwigParser } from './parser';
+import { Node } from './types';
 
 let lexer: TwigLexer;
 let parser: TwigParser;

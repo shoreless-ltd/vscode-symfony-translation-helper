@@ -170,7 +170,7 @@ const getFileDomainAndLocale = (path: string): {
         // Filter ICU hint from the domain.
         domain = domain.substring(0, domain.indexOf('+'));
     }
-log('Domain and locale', 'error', path, domain, locale);
+    log(`Domain and locale for "${path}":`, 'debug', domain, locale);
     return {
         domain: domain.toLowerCase(),
         locale: locale.toLowerCase()

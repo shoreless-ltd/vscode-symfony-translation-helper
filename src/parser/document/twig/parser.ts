@@ -1,5 +1,5 @@
 import { EmbeddedActionsParser, IParserConfig } from 'chevrotain';
-import { tokens as t } from './lexer.js';
+import { tokens as t } from './lexer';
 import {
     AdditiveExpression,
     ApplyStatement,
@@ -88,7 +88,7 @@ import {
     VariableStatement,
     VerbatimStatement,
     WithStatement,
-} from './types.js';
+} from './types';
 
 export class TwigParser extends EmbeddedActionsParser {
     constructor(options?: IParserConfig) {
