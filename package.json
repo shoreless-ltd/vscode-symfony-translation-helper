@@ -170,7 +170,7 @@
           },
           "symfonyTranslationHelper.logLevel": {
             "type": "string",
-            "default": "verbose",
+            "default": "error",
             "enum": [
               "none",
               "error",

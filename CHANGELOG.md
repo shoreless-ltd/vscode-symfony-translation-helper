@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.3.2](https://marketplace.visualstudio.com/_apis/public/gallery/publishers/shoreless/vsextensions/symfony-translation-helper/1.3.2/vspackage) <span style="font-size: 0.5em">2024-08-22</span>  
+
+### Bugfixes  
+
+- Adjust default debugging settings for production use.  
+
 ## [1.3.1](https://marketplace.visualstudio.com/_apis/public/gallery/publishers/shoreless/vsextensions/symfony-translation-helper/1.3.1/vspackage) <span style="font-size: 0.5em">2024-08-21</span>  
 
 ### Added  

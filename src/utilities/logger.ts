@@ -57,7 +57,7 @@ export default function log(text: string, level: 'debug'|'info'|'error' = 'info'
             data.map((value: any) => {
                 outputChannel.appendLine('- ' + formatValue(value));
             });
-            outputChannel.show();
+            // outputChannel.show();
         }
         else {
             console.log(`[symfony-translation-helper] ${icon} ${text}`, ...data);
